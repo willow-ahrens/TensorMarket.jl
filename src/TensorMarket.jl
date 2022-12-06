@@ -31,12 +31,17 @@ end
 _parseint(x) = parse(Int, x)
 
 """
-### ttread(filename, infoonly::Bool=false, retcoord::Bool=false)
+    ttread(filename, infoonly::Bool=false, retcoord::Bool=false)
 
 Read the contents of the Tensor Market file 'filename' into a sparse
 coordinate list or dense array, depending on the Tensor Market format
 indicated by 'coordinate' (coordinate sparse storage), or 'array' (dense
 array storage).
+
+Coordinate lists are returned as a tuple of arrays (analogous to `findnz()`)
+```
+    ((row_coordinates, column_coordinates, ...), values, size)
+````
 
 If infoonly is true (default: false), only information on the size and
 structure is returned from reading the header. The actual data for the
@@ -44,6 +49,8 @@ matrix elements are not parsed.
 
 If retcoord is true (default: false), the coordinate and value vectors
 are returned, if it is a sparse matrix, along with the header information.
+
+See also: [`ttwrite`](@ref)
 """
 function ttread(filename, infoonly::Bool=false, retcoord::Bool=false)
     open(filename,"r") do mmfile
@@ -144,9 +151,16 @@ function ttread(filename, infoonly::Bool=false, retcoord::Bool=false)
 end
 
 """
-### ttwrite(filename, matrix::SparseMatrixCSC)
+    ttwrite(filename, (I_1, I_2, ...), V, size)
 
-Write a sparse matrix to file 'filename'.
+Write sparse tensor coordinates to file 'filename' in TensorMarket format.
+
+Coordinate lists are specified as a tuple of arrays (analogous to `findnz()`)
+```
+    (I, V) = (row_coordinates, column_coordinates, ...), values)
+````
+
+See also: [`ttread`](@ref)
 """
 function ttwrite(filename, I, V, shape)
     open(filename, "w") do file
@@ -177,9 +191,25 @@ function ttwrite(filename, I, V, shape)
   end
 end
 
+"""
+    tnsread(filename)
+
+Read the contents of the FROSTT `.tns` file 'filename' into a sparse
+coordinate list.
+
+Coordinate lists are returned as a tuple of arrays (analogous to `findnz()`)
+```
+    ((row_coordinates, column_coordinates, ...), values)
+````
+
+This format assumes the size of the tensor equals its maximum coordinate in each
+dimension.
+
+See also: [`tnswrite`](@ref)
+"""
 function tnsread(fname)
     I = nothing
-    V = Float64[]
+    V = Any[]
     for line in readlines(fname)
         if length(line) > 1
             line = split(line, "#")[1]
@@ -191,19 +221,46 @@ function tnsread(fname)
                 for (n, e) in enumerate(entries[1:end-1])
                     push!(I[n], parse(Int, e))
                 end
-                push!(V, parse(Float64, entries[end]))
+                push!(V, something(
+                    tryparse(Bool, entries[end]),
+                    tryparse(Int, entries[end]),
+                    tryparse(Float64, entries[end]),
+                    tryparse(Complex{Int}, entries[end]),
+                    tryparse(Complex{Float64}, entries[end])
+                ))
             end
         end
     end
-    return (I, V)
+    if isnothing(I)
+        I = ()
+    end
+    return (I, map(identity, V))
 end
 
+"""
+    tnswrite(filename, (I_1, I_2, ...), V)
+
+Write sparse tensor coordinates to file 'filename' in FROSTT `.tns` format.
+
+Coordinate lists are specified as a tuple of arrays (analogous to `findnz()`)
+```
+    (I, V) = (row_coordinates, column_coordinates, ...), values)
+````
+
+This format assumes the size of the tensor equals its maximum coordinate in each
+dimension.
+
+See also: [`tnsread`](@ref)
+"""
 function tnswrite(fname, I, V)
     open(fname, "w") do io
         for (crd, val) in zip(zip(I...), V)
             write(io, join(crd, " "))
             write(io, " ")
-            write(io, string(val))
+            if val isa Bool
+                val = Int(val)
+            end
+            write(io, repr(val))
             write(io, "\n")
         end
     end
