@@ -31,7 +31,7 @@ end
 _parseint(x) = parse(Int, x)
 
 """
-### ttread(filename, infoonly::Bool=false, retcoord::Bool=false)
+    ttread(filename, infoonly::Bool=false, retcoord::Bool=false)
 
 Read the contents of the Tensor Market file 'filename' into a sparse
 coordinate list or dense array, depending on the Tensor Market format
@@ -49,6 +49,8 @@ matrix elements are not parsed.
 
 If retcoord is true (default: false), the coordinate and value vectors
 are returned, if it is a sparse matrix, along with the header information.
+
+See also: [`ttwrite`](@ref)
 """
 function ttread(filename, infoonly::Bool=false, retcoord::Bool=false)
     open(filename,"r") do mmfile
@@ -149,7 +151,7 @@ function ttread(filename, infoonly::Bool=false, retcoord::Bool=false)
 end
 
 """
-### ttwrite(filename, (I_1, I_2, ...), V, size)
+    ttwrite(filename, (I_1, I_2, ...), V, size)
 
 Write sparse tensor coordinates to file 'filename' in TensorMarket format.
 
@@ -157,6 +159,8 @@ Coordinate lists are specified as a tuple of arrays (analogous to `findnz()`)
 ```
     (I, V) = (row_coordinates, column_coordinates, ...), values)
 ````
+
+See also: [`ttread`](@ref)
 """
 function ttwrite(filename, I, V, shape)
     open(filename, "w") do file
@@ -188,7 +192,7 @@ function ttwrite(filename, I, V, shape)
 end
 
 """
-### tnsread(filename)
+    tnsread(filename)
 
 Read the contents of the FROSTT `.tns` file 'filename' into a sparse
 coordinate list.
@@ -200,6 +204,8 @@ Coordinate lists are returned as a tuple of arrays (analogous to `findnz()`)
 
 This format assumes the size of the tensor equals its maximum coordinate in each
 dimension.
+
+See also: [`tnswrite`](@ref)
 """
 function tnsread(fname)
     I = nothing
@@ -232,7 +238,7 @@ function tnsread(fname)
 end
 
 """
-### tnswrite(filename, (I_1, I_2, ...), V)
+    tnswrite(filename, (I_1, I_2, ...), V)
 
 Write sparse tensor coordinates to file 'filename' in FROSTT `.tns` format.
 
@@ -243,6 +249,8 @@ Coordinate lists are specified as a tuple of arrays (analogous to `findnz()`)
 
 This format assumes the size of the tensor equals its maximum coordinate in each
 dimension.
+
+See also: [`tnsread`](@ref)
 """
 function tnswrite(fname, I, V)
     open(fname, "w") do io
