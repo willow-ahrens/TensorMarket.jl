@@ -38,6 +38,11 @@ coordinate list or dense array, depending on the Tensor Market format
 indicated by 'coordinate' (coordinate sparse storage), or 'array' (dense
 array storage).
 
+Coordinate lists are returned as a tuple of arrays (analogous to `findnz()`)
+```
+    ((row_coordinates, column_coordinates, ...), values, size)
+````
+
 If infoonly is true (default: false), only information on the size and
 structure is returned from reading the header. The actual data for the
 matrix elements are not parsed.
@@ -144,9 +149,14 @@ function ttread(filename, infoonly::Bool=false, retcoord::Bool=false)
 end
 
 """
-### ttwrite(filename, matrix::SparseMatrixCSC)
+### ttwrite(filename, (I_1, I_2, ...), V, size)
 
-Write a sparse matrix to file 'filename'.
+Write sparse tensor coordinates to file 'filename' in TensorMarket format.
+
+Coordinate lists are specified as a tuple of arrays (analogous to `findnz()`)
+```
+    (I, V) = (row_coordinates, column_coordinates, ...), values)
+````
 """
 function ttwrite(filename, I, V, shape)
     open(filename, "w") do file
@@ -177,6 +187,20 @@ function ttwrite(filename, I, V, shape)
   end
 end
 
+"""
+### tnsread(filename)
+
+Read the contents of the FROSTT `.tns` file 'filename' into a sparse
+coordinate list.
+
+Coordinate lists are returned as a tuple of arrays (analogous to `findnz()`)
+```
+    ((row_coordinates, column_coordinates, ...), values)
+````
+
+This format assumes the size of the tensor equals its maximum coordinate in each
+dimension.
+"""
 function tnsread(fname)
     I = nothing
     V = Any[]
@@ -207,6 +231,19 @@ function tnsread(fname)
     return (I, map(identity, V))
 end
 
+"""
+### tnswrite(filename, (I_1, I_2, ...), V)
+
+Write sparse tensor coordinates to file 'filename' in FROSTT `.tns` format.
+
+Coordinate lists are specified as a tuple of arrays (analogous to `findnz()`)
+```
+    (I, V) = (row_coordinates, column_coordinates, ...), values)
+````
+
+This format assumes the size of the tensor equals its maximum coordinate in each
+dimension.
+"""
 function tnswrite(fname, I, V)
     open(fname, "w") do io
         for (crd, val) in zip(zip(I...), V)
