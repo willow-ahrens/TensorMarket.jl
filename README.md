@@ -9,10 +9,10 @@ This is a repository for sparse tensor file storage.
 
 Currently supporting the following formats:
 
-* `.ttx` through [`ttread()`]() and [`ttwrite()`]().
+* `.ttx` through [`ttread()`](http://willowahrens.io/TensorMarket.jl/dev/#TensorMarket.ttread) and [`ttwrite()`](http://willowahrens.io/TensorMarket.jl/dev/#TensorMarket.ttwrite).
 
     * The `.ttx` format is a straightforward generalization of [`.mtx`](https://math.nist.gov/MatrixMarket/formats.html) to support arbitrarily many indices. The file should specify `tensor` instead of `matrix`, but otherwise is the same. The `.ttx` format is also supported by the [TACO](http://tensor-compiler.org/) sparse tensor compiler.
 
-* [`.tns`](http://frostt.io/tensors/file-formats.html) through [`tnsread()`]() and [`tnswrite()`]()
+* [`.tns`](http://frostt.io/tensors/file-formats.html) through [`tnsread()`](http://willowahrens.io/TensorMarket.jl/dev/#TensorMarket.tnsread) and [`tnswrite()`](http://willowahrens.io/TensorMarket.jl/dev/#TensorMarket.tnswrite)
 
     * The `.tns` format is the format used by the FROSTT tensor collection.
