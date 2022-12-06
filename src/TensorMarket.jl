@@ -179,7 +179,7 @@ end
 
 function tnsread(fname)
     I = nothing
-    V = Float64[]
+    V = Any[]
     for line in readlines(fname)
         if length(line) > 1
             line = split(line, "#")[1]
@@ -191,11 +191,20 @@ function tnsread(fname)
                 for (n, e) in enumerate(entries[1:end-1])
                     push!(I[n], parse(Int, e))
                 end
-                push!(V, parse(Float64, entries[end]))
+                push!(V, something(
+                    tryparse(Bool, entries[end]),
+                    tryparse(Int, entries[end]),
+                    tryparse(Float64, entries[end]),
+                    tryparse(Complex{Int}, entries[end]),
+                    tryparse(Complex{Float64}, entries[end])
+                ))
             end
         end
     end
-    return (I, V)
+    if isnothing(I)
+        I = ()
+    end
+    return (I, map(identity, V))
 end
 
 function tnswrite(fname, I, V)
@@ -203,7 +212,10 @@ function tnswrite(fname, I, V)
         for (crd, val) in zip(zip(I...), V)
             write(io, join(crd, " "))
             write(io, " ")
-            write(io, string(val))
+            if val isa Bool
+                val = Int(val)
+            end
+            write(io, repr(val))
             write(io, "\n")
         end
     end
