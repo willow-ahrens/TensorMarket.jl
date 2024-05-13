@@ -1,10 +1,10 @@
 name = "TensorMarket"
 uuid = "8b7d4fe7-0b45-4d0d-9dd8-5cc9b23b4b77"
 authors = ["Willow Ahrens"]
-version = "0.1.0"
+version = "0.2.0"
 
 [compat]
-julia = "1.1"
+julia = "1.6.7"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

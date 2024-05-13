@@ -168,11 +168,16 @@ function ttwrite(filename, I, V, shape)
            eltype(V) <: Integer ?  "integer" :
            eltype(V) <: AbstractFloat ? "real" :
            eltype(V) <: Complex ? "complex" :
-           error("Invalid matrix type")
+           error("Invalid tensor type")
     sym = "general"
 
-    # write mm header
-    write(file, "%%MatrixMarket tensor coordinate $elem $sym\n")
+    if length(shape) <= 2
+        # write mm header
+        write(file, "%%MatrixMarket matrix coordinate $elem $sym\n")
+    else
+        # write mm header
+        write(file, "%%MatrixMarket tensor coordinate $elem $sym\n")
+    end
 
     # write matrix size and number of nonzeros
     write(file, "$(join(shape, " ")) $(length(V))\n")
@@ -182,9 +187,9 @@ function ttwrite(filename, I, V, shape)
         write(file, " ")
         if elem == "pattern" # omit values on pattern matrices
         elseif elem == "complex"
-            write(file, " $(real(val)) $(imag(val))")
+            write(file, "$(real(val)) $(imag(val))")
         else
-            write(file, " $(val)")
+            write(file, "$(val)")
         end
         write(file, "\n")
     end
