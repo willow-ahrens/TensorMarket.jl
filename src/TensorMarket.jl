@@ -214,32 +214,57 @@ See also: [`tnswrite`](@ref)
 """
 function tnsread(fname)
     I = nothing
-    V = Any[]
-    for line in readlines(fname)
-        if length(line) > 1
-            line = split(line, "#")[1]
+    V = nothing
+    W = Any[]
+    for line in eachline(fname)
+        if length(line) > 1 && line[1] != '#'
             entries = split(line)
             if length(entries) >= 1
-                if isnothing(I)
-                    I = ((Int[] for _ in 1:length(entries) - 1)...,)
+                I = ((Int[] for _ in 1:length(entries) - 1)...,)
+                for T in [Bool, Int, Float64, Complex{Int}, Complex{Float64}]
+                    if tryparse(T, entries[end]) !== nothing
+                        V = T[]
+                        break
+                    end
                 end
-                for (n, e) in enumerate(entries[1:end-1])
-                    push!(I[n], parse(Int, e))
-                end
-                push!(V, something(
-                    tryparse(Bool, entries[end]),
-                    tryparse(Int, entries[end]),
-                    tryparse(Float64, entries[end]),
-                    tryparse(Complex{Int}, entries[end]),
-                    tryparse(Complex{Float64}, entries[end])
-                ))
             end
         end
     end
     if isnothing(I)
-        I = ()
+        return ((), Any[])
     end
-    return (I, map(identity, V))
+    T = eltype(V)
+    fallback = false
+    for line in eachline(fname)
+        if length(line) > 1 && line[1] != '#'
+            entries = split(line)
+            if length(entries) >= 1
+                for (n, e) in enumerate(entries[1:end-1])
+                    push!(I[n], parse(Int, e))
+                end
+                if !fallback
+                    v = tryparse(T, entries[end])
+                    if v === nothing
+                        fallback = true
+                    else
+                        push!(V, v)
+                    end
+                end
+
+                if fallback
+                    push!(W, something(tryparse(Bool, entries[end]),
+                        tryparse(Int, entries[end]),
+                        tryparse(Float64, entries[end]),
+                        tryparse(Complex{Int}, entries[end]),
+                        tryparse(Complex{Float64}, entries[end])))
+                end
+            end
+        end
+    end
+    if length(W) > 0
+        V = vcat(V, W)
+    end
+    return (I, V)
 end
 
 """
