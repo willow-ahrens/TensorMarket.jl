@@ -213,58 +213,52 @@ dimension.
 See also: [`tnswrite`](@ref)
 """
 function tnsread(fname)
-    I = nothing
-    V = nothing
-    W = Any[]
+    N = nothing
     for line in eachline(fname)
+        entries = split(line)
         if length(line) > 1 && line[1] != '#'
-            entries = split(line)
             if length(entries) >= 1
-                I = ((Int[] for _ in 1:length(entries) - 1)...,)
-                for T in [Bool, Int, Float64, Complex{Int}, Complex{Float64}]
-                    if tryparse(T, entries[end]) !== nothing
-                        V = T[]
-                        break
-                    end
-                end
+                N = length(entries) - 1
+                break
             end
         end
     end
-    if isnothing(I)
-        return ((), Any[])
+    V = Bool[]
+    if isnothing(N)
+        return ((), V)
     end
-    T = eltype(V)
-    fallback = false
-    for line in eachline(fname)
+    I = ((Int[] for _ in 1:N)...,)
+    obj = eachline(fname)
+    state = iterate(obj)
+    for T in [Bool, Int, Float64, Complex{Int}, Complex{Float64}]
+        V = Vector{T}(V)
+        state = tnsread_helper(obj, state, I, V)
+        if state === nothing
+            return (I, V)
+        end
+    end
+    (line, _) = state
+    throw(ParseError("Could not parse line: $line"))
+end
+function tnsread_helper(obj, state, I::NTuple{N, Vector{Int}}, V::Vector{T}) where {N, T}
+    while state !== nothing
+        line, state = state
         if length(line) > 1 && line[1] != '#'
             entries = split(line)
             if length(entries) >= 1
-                for (n, e) in enumerate(entries[1:end-1])
-                    push!(I[n], parse(Int, e))
-                end
-                if !fallback
-                    v = tryparse(T, entries[end])
-                    if v === nothing
-                        fallback = true
-                    else
-                        push!(V, v)
+                v = tryparse(T, entries[end])
+                if v === nothing
+                    return (line, state)
+                else
+                    for (n, e) in enumerate(entries[1:end-1])
+                        push!(I[n], parse(Int, e))
                     end
-                end
-
-                if fallback
-                    push!(W, something(tryparse(Bool, entries[end]),
-                        tryparse(Int, entries[end]),
-                        tryparse(Float64, entries[end]),
-                        tryparse(Complex{Int}, entries[end]),
-                        tryparse(Complex{Float64}, entries[end])))
+                    push!(V, v)
                 end
             end
         end
+        state = iterate(obj, state)
     end
-    if length(W) > 0
-        V = vcat(V, W)
-    end
-    return (I, V)
 end
 
 """
